@@ -40,6 +40,34 @@ func (br *BookRepository) Create(book _entities.Book) (_entities.Book, error) {
 	return book, nil
 }
 
+func (br *BookRepository) GraphGet() ([]_entities.BookUserFormat, error) {
+	// type res struct {
+	// 	ID        int
+	// 	Title     string
+	// 	Publisher string
+	// 	UserID    int
+	// 	Name      string
+	// 	Email     string
+	// 	Password  string
+	// }
+	var tmp []_entities.BookUserFormat
+	qry := br.db.Raw(`Select books.ID, books.Title, books.publisher, users.ID as 'UserID', users.name, users.email, users.password from books join users on users.ID = books.user_id`).Scan(&tmp)
+
+	if err := qry.Error; err != nil {
+		return tmp, err
+	}
+
+	return tmp, nil
+	// return &_graphModel.Book{ID: &tmp.ID,
+	// 	Title:     tmp.Title,
+	// 	Publisher: tmp.Publisher,
+	// 	Userid: &_graphModel.User{
+	// 		ID:       &tmp.UserID,
+	// 		Name:     tmp.Name,
+	// 		Email:    tmp.Email,
+	// 		Password: tmp.Password}}, nil
+}
+
 func (br *BookRepository) GraphGetByID(id int) (_entities.BookUserFormat, error) {
 	// type res struct {
 	// 	ID        int

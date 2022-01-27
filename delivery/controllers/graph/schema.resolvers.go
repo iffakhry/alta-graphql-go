@@ -21,6 +21,17 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input _graphModel.New
 	responseData, err := r.userRepo.Create(userData)
 	if err != nil {
 		return nil, errors.New("failed create user")
+	} else {
+		if input.Book != nil {
+			_, err := r.bookRepo.Create(_entities.Book{
+				Title:     input.Book.Title,
+				Publisher: input.Book.Publisher,
+				UserId:    responseData.ID,
+			})
+			if err != nil {
+				return nil, errors.New("failed create book")
+			}
+		}
 	}
 
 	userResponseData := _graphModel.User{
@@ -31,8 +42,53 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input _graphModel.New
 	return &userResponseData, nil
 }
 
-func (r *queryResolver) Books(ctx context.Context) ([]*_graphModel.Book, error) {
+func (r *mutationResolver) CreateBook(ctx context.Context, input _graphModel.NewBook) (*_graphModel.Book, error) {
+	res, err := r.bookRepo.Create(_entities.Book{Title: input.Title, Publisher: input.Publisher, UserId: uint(*input.Userid)})
+
+	if err != nil {
+		return nil, errors.New("not found")
+	}
+	convID := int(res.ID)
+
+	return &_graphModel.Book{ID: convID, Title: res.Title, Publisher: res.Publisher}, nil
+}
+
+func (r *mutationResolver) BuatBook(ctx context.Context, title string, publisher string) (*_graphModel.Book, error) {
 	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) Books(ctx context.Context) ([]*_graphModel.Book, error) {
+	responseData, err := r.bookRepo.GraphGet()
+	fmt.Println(responseData)
+	if err != nil {
+		return nil, errors.New("not found")
+	}
+	booksData := []*_graphModel.Book{}
+	for _, value := range responseData {
+		bookResponseData := _graphModel.Book{
+			ID:        value.ID,
+			Title:     value.Title,
+			Publisher: value.Publisher,
+			Userid:    value.UserID,
+			User: &_graphModel.User{
+				ID:    value.UserID,
+				Name:  value.Name,
+				Email: value.Email,
+			},
+		}
+		booksData = append(booksData, &bookResponseData)
+
+	}
+	// bookResponseData.ID = responseData.ID
+	// bookResponseData.Title = responseData.Title
+	// bookResponseData.Publisher = responseData.Publisher
+	// usr := _graphModel.User{}
+	// usr.ID = responseData.UserID
+	// usr.Name = responseData.Name
+	// usr.Email = responseData.Email
+	// bookResponseData.User = &usr
+	fmt.Println(booksData)
+	return booksData, nil
 }
 
 func (r *queryResolver) BookByID(ctx context.Context, id int) (*_graphModel.Book, error) {

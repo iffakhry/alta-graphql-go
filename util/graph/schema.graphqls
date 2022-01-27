@@ -41,7 +41,7 @@ input NewUser {
 input NewBook {
   title: String!
   publisher: String!
-  userid: Int!
+  userid: Int
 }
 
 type Mutation {

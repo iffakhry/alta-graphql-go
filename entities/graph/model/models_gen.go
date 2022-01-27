@@ -10,10 +10,17 @@ type Book struct {
 	User      *User  `json:"user"`
 }
 
+type NewBook struct {
+	Title     string `json:"title"`
+	Publisher string `json:"publisher"`
+	Userid    *int   `json:"userid"`
+}
+
 type NewUser struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Name     string   `json:"name"`
+	Email    string   `json:"email"`
+	Password string   `json:"password"`
+	Book     *NewBook `json:"book"`
 }
 
 type User struct {
