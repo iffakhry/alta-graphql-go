@@ -9,23 +9,43 @@
 #   user: User!
 # }
 
+type Book {
+  id: Int!
+  title: String!
+  publisher: String!
+  userid: Int!
+  user: User!
+}
+
 type User {
-  id: Int
+  id: Int!
   name: String!
   email: String!
-  password: String!
+  password: String
 }
 
 type Query {
+  books: [Book!]!
+  bookByID(id: Int!): Book
   users: [User!]!
+  userById: User!
 }
 
 input NewUser {
   name: String!
   email: String!
   password: String!
+  book: NewBook
+}
+
+input NewBook {
+  title: String!
+  publisher: String!
+  userid: Int!
 }
 
 type Mutation {
   createUser(input: NewUser!): User!
+  createBook(input: NewBook!): Book!
+  buatBook(title: String!, publisher: String!): Book!
 }

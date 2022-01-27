@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	_bookRepo "sirclo/graphql/repository/book"
 	_userRepo "sirclo/graphql/repository/user"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -14,15 +15,17 @@ import (
 type Resolver struct {
 	// db      *gorm.DB
 	userRepo _userRepo.User
+	bookRepo _bookRepo.Book
 	// tmpList  []*_graphModel.User
 	// Observer map[string]chan []*model.Person
 	// Observer map[string]chan *_graphModel.User
 	// mu sync.Mutex
 }
 
-func NewResolver(ur _userRepo.User) *Resolver {
+func NewResolver(ur _userRepo.User, br _bookRepo.Book) *Resolver {
 	return &Resolver{
 		userRepo: ur,
+		bookRepo: br,
 		// tmpList:  []*_graphModel.User{},
 		// Observer: map[string]chan *_graphModel.User{},
 		// mu:       sync.Mutex{},

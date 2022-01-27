@@ -6,6 +6,7 @@ import (
 	_userController "sirclo/graphql/delivery/controllers/user"
 
 	_router "sirclo/graphql/delivery/router"
+	_bookRepo "sirclo/graphql/repository/book"
 	_userRepo "sirclo/graphql/repository/user"
 	_util "sirclo/graphql/util"
 
@@ -25,6 +26,7 @@ func main() {
 	//initiate user model
 	// authRepo := auth.New()
 	userRepo := _userRepo.New(db)
+	bookRepo := _bookRepo.New(db)
 
 	//initiate user controller
 	// authController := _authController.New(authRepo)
@@ -32,7 +34,7 @@ func main() {
 
 	//create echo http
 	e := echo.New()
-	client := _graph.NewResolver(userRepo)
+	client := _graph.NewResolver(userRepo, bookRepo)
 	srv := _router.NewGraphQLServer(client)
 	//register API path and controller
 	_router.RegisterPath(e, userController, srv)

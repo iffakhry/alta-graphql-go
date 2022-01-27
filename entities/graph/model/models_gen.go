@@ -2,6 +2,14 @@
 
 package model
 
+type Book struct {
+	ID        int    `json:"id"`
+	Title     string `json:"title"`
+	Publisher string `json:"publisher"`
+	Userid    int    `json:"userid"`
+	User      *User  `json:"user"`
+}
+
 type NewUser struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
@@ -9,8 +17,8 @@ type NewUser struct {
 }
 
 type User struct {
-	ID       *int   `json:"id"`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	ID       int     `json:"id"`
+	Name     string  `json:"name"`
+	Email    string  `json:"email"`
+	Password *string `json:"password"`
 }

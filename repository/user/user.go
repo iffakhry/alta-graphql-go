@@ -22,3 +22,10 @@ func (p *UserRepository) Get() ([]_entities.User, error) {
 	}
 	return users, nil
 }
+
+func (p *UserRepository) Create(user _entities.User) (_entities.User, error) {
+	if err := p.db.Save(&user).Error; err != nil {
+		return user, err
+	}
+	return user, nil
+}

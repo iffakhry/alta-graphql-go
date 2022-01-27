@@ -36,5 +36,6 @@ func DatabaseMigration(db *gorm.DB) {
 	// db.Migrator().DropTable(entities.Book{})
 	// db.Migrator().DropTable(entities.Person{})
 	db.AutoMigrate(_entities.User{})
+	db.AutoMigrate(_entities.Book{})
 
 }
