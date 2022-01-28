@@ -24,11 +24,11 @@ type User {
   password: String
 }
 
-type Query {
-  books: [Book!]!
-  bookByID(id: Int!): Book
-  users: [User!]!
-  userById: User!
+type LoginResponse {
+  message: String!
+  id: Int
+  name: String
+  token: String
 }
 
 input NewUser {
@@ -44,8 +44,23 @@ input NewBook {
   userid: Int
 }
 
+input BookData {
+  title: String
+  publisher: String
+}
+
+type Query {
+  books: [Book!]!
+  bookByID(id: Int!): Book
+  users: [User!]!
+  userById: User!
+  login(email: String!, password: String!): LoginResponse!
+  booksSearch(data: BookData): Book
+}
+
 type Mutation {
   createUser(input: NewUser!): User!
   createBook(input: NewBook!): Book!
   buatBook(title: String!, publisher: String!): Book!
+  deleteBook(id: Int!): String!
 }

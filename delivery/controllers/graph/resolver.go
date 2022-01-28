@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	_authRepo "sirclo/graphql/repository/auth"
 	_bookRepo "sirclo/graphql/repository/book"
 	_userRepo "sirclo/graphql/repository/user"
 
@@ -14,6 +15,7 @@ import (
 
 type Resolver struct {
 	// db      *gorm.DB
+	authRepo _authRepo.Auth
 	userRepo _userRepo.User
 	bookRepo _bookRepo.Book
 	// tmpList  []*_graphModel.User
@@ -22,8 +24,9 @@ type Resolver struct {
 	// mu sync.Mutex
 }
 
-func NewResolver(ur _userRepo.User, br _bookRepo.Book) *Resolver {
+func NewResolver(ar _authRepo.Auth, ur _userRepo.User, br _bookRepo.Book) *Resolver {
 	return &Resolver{
+		authRepo: ar,
 		userRepo: ur,
 		bookRepo: br,
 		// tmpList:  []*_graphModel.User{},

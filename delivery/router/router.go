@@ -1,7 +1,10 @@
 package router
 
 import (
+	"context"
 	_userController "sirclo/graphql/delivery/controllers/user"
+
+	_middlewares "sirclo/graphql/delivery/middlewares"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -22,9 +25,11 @@ func RegisterPath(e *echo.Echo, userController *_userController.UserController, 
 		e.Use(middleware.CORSWithConfig((middleware.CORSConfig{})))
 
 		e.POST("/query", func(c echo.Context) error {
+			ctx := context.WithValue(c.Request().Context(), "EchoContextKey", c.Get("INFO"))
+			c.SetRequest(c.Request().WithContext(ctx))
 			srv.ServeHTTP(c.Response(), c.Request())
 			return nil
-		})
+		}, _middlewares.JWTMiddleware())
 
 		// For Subscriptions
 		// e.GET("/subscriptions", func(c echo.Context) error {

@@ -51,17 +51,27 @@ type ComplexityRoot struct {
 		Userid    func(childComplexity int) int
 	}
 
+	LoginResponse struct {
+		ID      func(childComplexity int) int
+		Message func(childComplexity int) int
+		Name    func(childComplexity int) int
+		Token   func(childComplexity int) int
+	}
+
 	Mutation struct {
 		BuatBook   func(childComplexity int, title string, publisher string) int
 		CreateBook func(childComplexity int, input model.NewBook) int
 		CreateUser func(childComplexity int, input model.NewUser) int
+		DeleteBook func(childComplexity int, id int) int
 	}
 
 	Query struct {
-		BookByID func(childComplexity int, id int) int
-		Books    func(childComplexity int) int
-		UserByID func(childComplexity int) int
-		Users    func(childComplexity int) int
+		BookByID    func(childComplexity int, id int) int
+		Books       func(childComplexity int) int
+		BooksSearch func(childComplexity int, data *model.BookData) int
+		Login       func(childComplexity int, email string, password string) int
+		UserByID    func(childComplexity int) int
+		Users       func(childComplexity int) int
 	}
 
 	User struct {
@@ -76,12 +86,15 @@ type MutationResolver interface {
 	CreateUser(ctx context.Context, input model.NewUser) (*model.User, error)
 	CreateBook(ctx context.Context, input model.NewBook) (*model.Book, error)
 	BuatBook(ctx context.Context, title string, publisher string) (*model.Book, error)
+	DeleteBook(ctx context.Context, id int) (string, error)
 }
 type QueryResolver interface {
 	Books(ctx context.Context) ([]*model.Book, error)
 	BookByID(ctx context.Context, id int) (*model.Book, error)
 	Users(ctx context.Context) ([]*model.User, error)
 	UserByID(ctx context.Context) (*model.User, error)
+	Login(ctx context.Context, email string, password string) (*model.LoginResponse, error)
+	BooksSearch(ctx context.Context, data *model.BookData) (*model.Book, error)
 }
 
 type executableSchema struct {
@@ -134,6 +147,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Book.Userid(childComplexity), true
 
+	case "LoginResponse.id":
+		if e.complexity.LoginResponse.ID == nil {
+			break
+		}
+
+		return e.complexity.LoginResponse.ID(childComplexity), true
+
+	case "LoginResponse.message":
+		if e.complexity.LoginResponse.Message == nil {
+			break
+		}
+
+		return e.complexity.LoginResponse.Message(childComplexity), true
+
+	case "LoginResponse.name":
+		if e.complexity.LoginResponse.Name == nil {
+			break
+		}
+
+		return e.complexity.LoginResponse.Name(childComplexity), true
+
+	case "LoginResponse.token":
+		if e.complexity.LoginResponse.Token == nil {
+			break
+		}
+
+		return e.complexity.LoginResponse.Token(childComplexity), true
+
 	case "Mutation.buatBook":
 		if e.complexity.Mutation.BuatBook == nil {
 			break
@@ -170,6 +211,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateUser(childComplexity, args["input"].(model.NewUser)), true
 
+	case "Mutation.deleteBook":
+		if e.complexity.Mutation.DeleteBook == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteBook_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteBook(childComplexity, args["id"].(int)), true
+
 	case "Query.bookByID":
 		if e.complexity.Query.BookByID == nil {
 			break
@@ -188,6 +241,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Books(childComplexity), true
+
+	case "Query.booksSearch":
+		if e.complexity.Query.BooksSearch == nil {
+			break
+		}
+
+		args, err := ec.field_Query_booksSearch_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.BooksSearch(childComplexity, args["data"].(*model.BookData)), true
+
+	case "Query.login":
+		if e.complexity.Query.Login == nil {
+			break
+		}
+
+		args, err := ec.field_Query_login_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Login(childComplexity, args["email"].(string), args["password"].(string)), true
 
 	case "Query.userById":
 		if e.complexity.Query.UserByID == nil {
@@ -321,11 +398,11 @@ type User {
   password: String
 }
 
-type Query {
-  books: [Book!]!
-  bookByID(id: Int!): Book
-  users: [User!]!
-  userById: User!
+type LoginResponse {
+  message: String!
+  id: Int
+  name: String
+  token: String
 }
 
 input NewUser {
@@ -341,10 +418,25 @@ input NewBook {
   userid: Int
 }
 
+input BookData {
+  title: String
+  publisher: String
+}
+
+type Query {
+  books: [Book!]!
+  bookByID(id: Int!): Book
+  users: [User!]!
+  userById: User!
+  login(email: String!, password: String!): LoginResponse!
+  booksSearch(data: BookData): Book
+}
+
 type Mutation {
   createUser(input: NewUser!): User!
   createBook(input: NewBook!): Book!
   buatBook(title: String!, publisher: String!): Book!
+  deleteBook(id: Int!): String!
 }
 `, BuiltIn: false},
 }
@@ -408,6 +500,21 @@ func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteBook_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -435,6 +542,45 @@ func (ec *executionContext) field_Query_bookByID_args(ctx context.Context, rawAr
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_booksSearch_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.BookData
+	if tmp, ok := rawArgs["data"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
+		arg0, err = ec.unmarshalOBookData2ᚖsircloᚋgraphqlᚋentitiesᚋgraphᚋmodelᚐBookData(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["data"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["email"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["email"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["password"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["password"] = arg1
 	return args, nil
 }
 
@@ -651,6 +797,137 @@ func (ec *executionContext) _Book_user(ctx context.Context, field graphql.Collec
 	return ec.marshalNUser2ᚖsircloᚋgraphqlᚋentitiesᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _LoginResponse_message(ctx context.Context, field graphql.CollectedField, obj *model.LoginResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "LoginResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _LoginResponse_id(ctx context.Context, field graphql.CollectedField, obj *model.LoginResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "LoginResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _LoginResponse_name(ctx context.Context, field graphql.CollectedField, obj *model.LoginResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "LoginResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _LoginResponse_token(ctx context.Context, field graphql.CollectedField, obj *model.LoginResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "LoginResponse",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Token, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_createUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -775,6 +1052,48 @@ func (ec *executionContext) _Mutation_buatBook(ctx context.Context, field graphq
 	res := resTmp.(*model.Book)
 	fc.Result = res
 	return ec.marshalNBook2ᚖsircloᚋgraphqlᚋentitiesᚋgraphᚋmodelᚐBook(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_deleteBook(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_deleteBook_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteBook(rctx, args["id"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_books(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -919,6 +1238,87 @@ func (ec *executionContext) _Query_userById(ctx context.Context, field graphql.C
 	res := resTmp.(*model.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚖsircloᚋgraphqlᚋentitiesᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_login_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Login(rctx, args["email"].(string), args["password"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.LoginResponse)
+	fc.Result = res
+	return ec.marshalNLoginResponse2ᚖsircloᚋgraphqlᚋentitiesᚋgraphᚋmodelᚐLoginResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_booksSearch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_booksSearch_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().BooksSearch(rctx, args["data"].(*model.BookData))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Book)
+	fc.Result = res
+	return ec.marshalOBook2ᚖsircloᚋgraphqlᚋentitiesᚋgraphᚋmodelᚐBook(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2251,6 +2651,37 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputBookData(ctx context.Context, obj interface{}) (model.BookData, error) {
+	var it model.BookData
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "title":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			it.Title, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "publisher":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("publisher"))
+			it.Publisher, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewBook(ctx context.Context, obj interface{}) (model.NewBook, error) {
 	var it model.NewBook
 	asMap := map[string]interface{}{}
@@ -2416,6 +2847,58 @@ func (ec *executionContext) _Book(ctx context.Context, sel ast.SelectionSet, obj
 	return out
 }
 
+var loginResponseImplementors = []string{"LoginResponse"}
+
+func (ec *executionContext) _LoginResponse(ctx context.Context, sel ast.SelectionSet, obj *model.LoginResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, loginResponseImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LoginResponse")
+		case "message":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._LoginResponse_message(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "id":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._LoginResponse_id(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		case "name":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._LoginResponse_name(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		case "token":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._LoginResponse_token(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -2458,6 +2941,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "buatBook":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_buatBook(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteBook":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteBook(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -2574,6 +3067,49 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "login":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_login(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "booksSearch":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_booksSearch(ctx, field)
 				return res
 			}
 
@@ -3164,6 +3700,20 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) marshalNLoginResponse2sircloᚋgraphqlᚋentitiesᚋgraphᚋmodelᚐLoginResponse(ctx context.Context, sel ast.SelectionSet, v model.LoginResponse) graphql.Marshaler {
+	return ec._LoginResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNLoginResponse2ᚖsircloᚋgraphqlᚋentitiesᚋgraphᚋmodelᚐLoginResponse(ctx context.Context, sel ast.SelectionSet, v *model.LoginResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._LoginResponse(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNNewBook2sircloᚋgraphqlᚋentitiesᚋgraphᚋmodelᚐNewBook(ctx context.Context, v interface{}) (model.NewBook, error) {
 	res, err := ec.unmarshalInputNewBook(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3505,6 +4055,14 @@ func (ec *executionContext) marshalOBook2ᚖsircloᚋgraphqlᚋentitiesᚋgraph�
 		return graphql.Null
 	}
 	return ec._Book(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOBookData2ᚖsircloᚋgraphqlᚋentitiesᚋgraphᚋmodelᚐBookData(ctx context.Context, v interface{}) (*model.BookData, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputBookData(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {

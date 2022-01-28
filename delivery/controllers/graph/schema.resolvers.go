@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sirclo/graphql/delivery/middlewares"
 	_entities "sirclo/graphql/entities"
 	_graphModel "sirclo/graphql/entities/graph/model"
 	"sirclo/graphql/util/graph/generated"
@@ -57,7 +58,19 @@ func (r *mutationResolver) BuatBook(ctx context.Context, title string, publisher
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *mutationResolver) DeleteBook(ctx context.Context, id int) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *queryResolver) Books(ctx context.Context) ([]*_graphModel.Book, error) {
+	dataLogin := ctx.Value("EchoContextKey")
+	if dataLogin == nil {
+		return nil, errors.New("unauthorized")
+	} else {
+		convData := ctx.Value("EchoContextKey").(*middlewares.User)
+		fmt.Println("id user", convData.Id)
+	}
+
 	responseData, err := r.bookRepo.GraphGet()
 	fmt.Println(responseData)
 	if err != nil {
@@ -138,6 +151,23 @@ func (r *queryResolver) Users(ctx context.Context) ([]*_graphModel.User, error) 
 }
 
 func (r *queryResolver) UserByID(ctx context.Context) (*_graphModel.User, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) Login(ctx context.Context, email string, password string) (*_graphModel.LoginResponse, error) {
+	id, name, token, err := r.authRepo.Login(email, password)
+	if err != nil {
+		return nil, err
+	}
+	return &_graphModel.LoginResponse{
+		Message: "Login Success",
+		ID:      &id,
+		Name:    &name,
+		Token:   &token,
+	}, nil
+}
+
+func (r *queryResolver) BooksSearch(ctx context.Context, data *_graphModel.BookData) (*_graphModel.Book, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 

@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/99designs/gqlgen v0.16.0
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/gorilla/websocket v1.4.2
 	github.com/labstack/echo/v4 v4.6.3
 	github.com/labstack/gommon v0.3.1

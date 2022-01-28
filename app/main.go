@@ -6,6 +6,7 @@ import (
 	_userController "sirclo/graphql/delivery/controllers/user"
 
 	_router "sirclo/graphql/delivery/router"
+	_authRepo "sirclo/graphql/repository/auth"
 	_bookRepo "sirclo/graphql/repository/book"
 	_userRepo "sirclo/graphql/repository/user"
 	_util "sirclo/graphql/util"
@@ -24,7 +25,7 @@ func main() {
 	db := _util.MysqlDriver(config)
 
 	//initiate user model
-	// authRepo := auth.New()
+	authRepo := _authRepo.New(db)
 	userRepo := _userRepo.New(db)
 	bookRepo := _bookRepo.New(db)
 
@@ -34,7 +35,7 @@ func main() {
 
 	//create echo http
 	e := echo.New()
-	client := _graph.NewResolver(userRepo, bookRepo)
+	client := _graph.NewResolver(authRepo, userRepo, bookRepo)
 	srv := _router.NewGraphQLServer(client)
 	//register API path and controller
 	_router.RegisterPath(e, userController, srv)
