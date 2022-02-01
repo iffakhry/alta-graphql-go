@@ -43,8 +43,42 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input _graphModel.New
 	return &userResponseData, nil
 }
 
+func (r *mutationResolver) UpdateUser(ctx context.Context, id int, set _graphModel.ChangeUser) (*_graphModel.SuccessResponse, error) {
+	userData := _entities.UpdateUserData{
+		Name:     set.Name,
+		Email:    set.Email,
+		Password: set.Password,
+	}
+
+	rowAffect, err := r.userRepo.Update(id, userData)
+	if err != nil {
+		return nil, err
+	}
+	var responseData _graphModel.SuccessResponse
+	if rowAffect > 0 && err == nil {
+		responseData.Message = "Update data success"
+	} else {
+		responseData.Message = "nothing changed"
+	}
+	return &responseData, nil
+}
+
+func (r *mutationResolver) DeleteUser(ctx context.Context, id int) (*_graphModel.SuccessResponse, error) {
+	rowAffect, err := r.userRepo.Delete(id)
+	if err != nil {
+		return nil, err
+	}
+	var responseData _graphModel.SuccessResponse
+	if rowAffect > 0 && err == nil {
+		responseData.Message = "Delete data success"
+	} else {
+		responseData.Message = "nothing changed. Please make sure ID is correct"
+	}
+	return &responseData, nil
+}
+
 func (r *mutationResolver) CreateBook(ctx context.Context, input _graphModel.NewBook) (*_graphModel.Book, error) {
-	res, err := r.bookRepo.Create(_entities.Book{Title: input.Title, Publisher: input.Publisher, UserId: uint(*input.Userid)})
+	res, err := r.bookRepo.Create(_entities.Book{Title: input.Title, Publisher: input.Publisher, UserId: uint(input.Userid)})
 
 	if err != nil {
 		return nil, errors.New("not found")
@@ -59,6 +93,10 @@ func (r *mutationResolver) BuatBook(ctx context.Context, title string, publisher
 }
 
 func (r *mutationResolver) DeleteBook(ctx context.Context, id int) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) UpdateBook(ctx context.Context, id int, set *_graphModel.ChangeBook) (string, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -144,13 +182,14 @@ func (r *queryResolver) Users(ctx context.Context) ([]*_graphModel.User, error) 
 
 	for _, v := range responseData {
 		convertID := int(v.ID)
-		userResponseData = append(userResponseData, &_graphModel.User{ID: convertID, Name: v.Name, Email: v.Email, Password: &v.Password})
+		passwordData := v.Password
+		userResponseData = append(userResponseData, &_graphModel.User{ID: convertID, Name: v.Name, Email: v.Email, Password: &passwordData})
 	}
 
 	return userResponseData, nil
 }
 
-func (r *queryResolver) UserByID(ctx context.Context) (*_graphModel.User, error) {
+func (r *queryResolver) UserByID(ctx context.Context, id int) (*_graphModel.User, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -167,7 +206,7 @@ func (r *queryResolver) Login(ctx context.Context, email string, password string
 	}, nil
 }
 
-func (r *queryResolver) BooksSearch(ctx context.Context, data *_graphModel.BookData) (*_graphModel.Book, error) {
+func (r *queryResolver) BooksBySearch(ctx context.Context, data *_graphModel.BookData) (*_graphModel.Book, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -179,3 +218,13 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) BooksSearch(ctx context.Context, data *_graphModel.BookData) (*_graphModel.Book, error) {
+	panic(fmt.Errorf("not implemented"))
+}

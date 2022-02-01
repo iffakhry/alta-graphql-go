@@ -15,6 +15,18 @@ type BookData struct {
 	Publisher *string `json:"publisher"`
 }
 
+type ChangeBook struct {
+	Title     *string `json:"title"`
+	Publisher *string `json:"publisher"`
+	Userid    *int    `json:"userid"`
+}
+
+type ChangeUser struct {
+	Name     *string `json:"name"`
+	Email    *string `json:"email"`
+	Password *string `json:"password"`
+}
+
 type LoginResponse struct {
 	Message string  `json:"message"`
 	ID      *int    `json:"id"`
@@ -25,7 +37,7 @@ type LoginResponse struct {
 type NewBook struct {
 	Title     string `json:"title"`
 	Publisher string `json:"publisher"`
-	Userid    *int   `json:"userid"`
+	Userid    int    `json:"userid"`
 }
 
 type NewUser struct {
@@ -33,6 +45,10 @@ type NewUser struct {
 	Email    string   `json:"email"`
 	Password string   `json:"password"`
 	Book     *NewBook `json:"book"`
+}
+
+type SuccessResponse struct {
+	Message string `json:"message"`
 }
 
 type User struct {

@@ -9,3 +9,9 @@ type User struct {
 	Password string
 	Books    []Book
 }
+
+type UpdateUserData struct {
+	Name     *string
+	Email    *string
+	Password *string
+}

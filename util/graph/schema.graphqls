@@ -31,6 +31,10 @@ type LoginResponse {
   token: String
 }
 
+type SuccessResponse {
+  message: String!
+}
+
 input NewUser {
   name: String!
   email: String!
@@ -38,9 +42,21 @@ input NewUser {
   book: NewBook
 }
 
+input ChangeUser {
+  name: String
+  email: String
+  password: String
+}
+
 input NewBook {
   title: String!
   publisher: String!
+  userid: Int!
+}
+
+input ChangeBook {
+  title: String
+  publisher: String
   userid: Int
 }
 
@@ -53,14 +69,17 @@ type Query {
   books: [Book!]!
   bookByID(id: Int!): Book
   users: [User!]!
-  userById: User!
+  userById(id: Int!): User!
   login(email: String!, password: String!): LoginResponse!
-  booksSearch(data: BookData): Book
+  booksBySearch(data: BookData): Book
 }
 
 type Mutation {
   createUser(input: NewUser!): User!
+  updateUser(id: Int!, set: ChangeUser!): SuccessResponse!
+  deleteUser(id: Int!): SuccessResponse!
   createBook(input: NewBook!): Book!
   buatBook(title: String!, publisher: String!): Book!
   deleteBook(id: Int!): String!
+  updateBook(id: Int!, set: ChangeBook): String!
 }
